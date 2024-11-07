@@ -17,19 +17,19 @@ include 'config.php';
     </form>
 
     <?php
-    // Обробка кнопки для створення адміністратора
+    
     if (isset($_POST['create_admin'])) {
         $adminUsername = 'admin';
         $adminPassword = password_hash('admin123', PASSWORD_BCRYPT);
         $adminEmail = 'admin@library.com';
         $adminRole = 'admin';
 
-        // Перевірка, чи існує вже обліковий запис адміністратора
+       
         $checkAdmin = $conn->query("SELECT * FROM users WHERE username = '$adminUsername'");
         if ($checkAdmin->num_rows > 0) {
             echo "<p>Обліковий запис адміністратора вже існує!</p>";
         } else {
-            // Додаємо нового адміністратора
+            
             $stmt = $conn->prepare("INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)");
             $stmt->bind_param("ssss", $adminUsername, $adminPassword, $adminEmail, $adminRole);
             

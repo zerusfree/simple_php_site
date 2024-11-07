@@ -2,34 +2,31 @@
 include 'config.php';
 include 'header.php';
 
-// Отримуємо значення параметрів
 $genre = $_GET['genre'] ?? '';
 $sort = $_GET['sort'] ?? 'title';
 
-// Формуємо SQL-запит
+// Оновлений запит, що включає кількість доступних книг
 $query = "SELECT books.book_id, books.title, authors.name AS author, genres.genre_name AS genre, 
-          publishers.publisher_name AS publisher, books.publication_year
+          books.publication_year, books.quantity
           FROM books 
           JOIN authors ON books.author_id = authors.author_id
-          JOIN genres ON books.genre_id = genres.genre_id
-          JOIN publishers ON books.publisher_id = publishers.publisher_id";
+          JOIN genres ON books.genre_id = genres.genre_id";
 
-// Додаємо фільтрацію за жанром, якщо параметр жанру не порожній
 $params = [];
 if ($genre) {
     $query .= " WHERE genres.genre_name = ?";
     $params[] = $genre;
 }
 
-// Додаємо сортування
-$allowed_sort_columns = ['title', 'author', 'publication_year'];
+// Дозволені поля для сортування
+$allowed_sort_columns = ['title', 'author', 'publication_year', 'quantity'];
 if (in_array($sort, $allowed_sort_columns)) {
-    $query .= " ORDER BY $sort";
+    $query .= " ORDER BY $sort DESC";
 } else {
     $query .= " ORDER BY title";
 }
 
-// Виконуємо запит із підготовленими параметрами
+// Виконання запиту з фільтрацією за жанром (якщо вибрано)
 $stmt = $conn->prepare($query);
 if ($genre) {
     $stmt->bind_param("s", $genre);
@@ -44,7 +41,6 @@ $result = $stmt->get_result();
     <select name="genre">
         <option value="">Всі жанри</option>
         <?php
-        // Отримуємо всі жанри для випадаючого списку
         $genres_query = "SELECT genre_name FROM genres";
         $genres_result = $conn->query($genres_query);
         while ($genre_row = $genres_result->fetch_assoc()) {
@@ -59,6 +55,7 @@ $result = $stmt->get_result();
         <option value="title" <?php if ($sort === 'title') echo 'selected'; ?>>Назва</option>
         <option value="author" <?php if ($sort === 'author') echo 'selected'; ?>>Автор</option>
         <option value="publication_year" <?php if ($sort === 'publication_year') echo 'selected'; ?>>Рік</option>
+        <option value="quantity" <?php if ($sort === 'quantity') echo 'selected'; ?>>Наявність</option>
     </select>
     <button type="submit">Застосувати</button>
 </form>
@@ -68,22 +65,30 @@ $result = $stmt->get_result();
         <th>Назва</th>
         <th>Автор</th>
         <th>Жанр</th>
-        <th>Видавництво</th>
         <th>Рік видання</th>
+        <th>Наявність</th>
         <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
             <th>Дії</th>
         <?php endif; ?>
+        <th>Позичити</th>
     </tr>
     <?php while ($row = $result->fetch_assoc()): ?>
         <tr>
             <td><?php echo htmlspecialchars($row['title']); ?></td>
             <td><?php echo htmlspecialchars($row['author']); ?></td>
             <td><?php echo htmlspecialchars($row['genre']); ?></td>
-            <td><?php echo htmlspecialchars($row['publisher']); ?></td>
             <td><?php echo htmlspecialchars($row['publication_year']); ?></td>
+            <td><?php echo $row['quantity'] > 0 ? $row['quantity'] . ' доступно' : 'Недоступно'; ?></td>
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
                 <td><a href="/labsWeb/lab_7/admin/edit_book.php?id=<?php echo $row['book_id']; ?>">Редагувати</a></td>
             <?php endif; ?>
+            <td>
+                <?php if ($row['quantity'] > 0): ?>
+                    <a href="/labsWeb/lab_7/loans.php?book_id=<?php echo $row['book_id']; ?>">Позичити</a>
+                <?php else: ?>
+                    Недоступно
+                <?php endif; ?>
+            </td>
         </tr>
     <?php endwhile; ?>
 </table>

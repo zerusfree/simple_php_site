@@ -10,10 +10,14 @@
 <nav>
     <a href="/labsWeb/lab_7/index.php">Головна</a>
     <a href="/labsWeb/lab_7/catalog.php">Каталог книг</a>
+    
     <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
         <a href="/labsWeb/lab_7/admin/add_book.php">Додати книгу</a>
+        <a href="/labsWeb/lab_7/admin/admin_create_test.php">Створити тест</a> 
     <?php endif; ?>
+    
     <?php if (isset($_SESSION['user_id'])): ?>
+        <a href="/labsWeb/lab_7/take_test.php">Пройти тест</a>
         <a href="/labsWeb/lab_7/logout.php">Вийти</a>
     <?php else: ?>
         <a href="/labsWeb/lab_7/register.php">Реєстрація</a>
